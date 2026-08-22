@@ -19,6 +19,7 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+          include-prerelease: true
 
       - name: Restore Dependencies
         run: dotnet restore MedAI.sln
@@ -47,7 +48,7 @@ jobs:
   deploy-to-vps:
     name: Deploy to Contabo VPS Server
     needs: build-and-test
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && secrets.VPS_PASSWORD != ''
     runs-on: ubuntu-latest
 
     steps:
