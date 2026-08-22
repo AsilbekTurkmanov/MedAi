@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_pass_2026}
     ports:
-      - "${POSTGRES_PORT:-5433}:5432"
+      - "${POSTGRES_PORT:-5434}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -39,7 +39,7 @@ services:
       - ConnectionStrings__DefaultConnection=Host=postgres;Database=medaidb;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres_secure_pass_2026}
       - Jwt__Secret=${JWT_SECRET:-MedAI_Super_Secret_JWT_Key_2026_For_Healthcare_Platform_Security!}
     ports:
-      - "${BACKEND_PORT:-5010}:5000"
+      - "${BACKEND_PORT:-5050}:5000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,7 +49,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5010/api}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://169.58.161.223:5050/api}
     container_name: medai-frontend
     restart: always
     environment:
