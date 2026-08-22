@@ -1,0 +1,65 @@
+name: MedAI CI/CD & Production Deployment Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build & Run Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore MedAI.sln
+
+      - name: Build Solution
+        run: dotnet build MedAI.sln --no-restore -c Release
+
+      - name: Run Unit Tests
+        run: dotnet test MedAI.sln --no-build -c Release --verbosity normal
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Frontend Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build Next.js Frontend
+        run: |
+          cd frontend
+          npm run build
+
+  deploy-to-vps:
+    name: Deploy to Contabo VPS Server
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST || '169.58.161.223' }}
+          username: ${{ secrets.VPS_USERNAME || 'root' }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          script: |
+            cd MedAi || (git clone https://github.com/AsilbekTurkmanov/MedAi.git && cd MedAi)
+            git pull origin main
+            chmod +x deploy.sh backup.sh
+            ./deploy.sh
