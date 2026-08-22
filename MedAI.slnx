@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MedAI.API/MedAI.API.csproj" />
+    <Project Path="src/MedAI.Application/MedAI.Application.csproj" />
+    <Project Path="src/MedAI.Domain/MedAI.Domain.csproj" />
+    <Project Path="src/MedAI.Infrastructure/MedAI.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MedAI.Tests/MedAI.Tests.csproj" />
+  </Folder>
+</Solution>
