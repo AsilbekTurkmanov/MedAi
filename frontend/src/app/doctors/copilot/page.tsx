@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import { doctorService, aiService } from '@/services/allServices';
 import { PatientProfile, DoctorBriefResponse } from '@/types';
-import { Bot, Sparkles, User, Activity, AlertTriangle, CheckCircle2, FileText, HeartPulse } from 'lucide-react';
+import { Bot, Sparkles, AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 export default function DoctorCopilotPage() {
   const [patients, setPatients] = useState<PatientProfile[]>([]);
@@ -34,7 +34,7 @@ export default function DoctorCopilotPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-300">
       <Navbar />
 
       <div className="flex flex-1">
@@ -42,8 +42,8 @@ export default function DoctorCopilotPage() {
 
         <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-7xl">
           <div className="mb-8">
-            <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-              <Bot className="w-8 h-8 text-cyan-400" /> AI Doctor Copilot Workspace
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+              <Bot className="w-8 h-8 text-cyan-600 dark:text-cyan-400" /> AI Doctor Copilot Workspace
             </h1>
             <p className="text-sm text-slate-400 mt-1">
               Automated pre-consultation briefings, critical lab alerts, and recommended clinical focus areas.
@@ -53,32 +53,32 @@ export default function DoctorCopilotPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Patient Selector */}
             <div className="lg:col-span-1 space-y-4">
-              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Select Patient</h3>
+              <h3 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Select Patient</h3>
               {patients.map((p) => (
                 <div
                   key={p.id}
                   onClick={() => { setSelectedPatientId(p.id); fetchBrief(p.id); }}
                   className={`p-4 rounded-2xl border cursor-pointer transition-all ${
                     selectedPatientId === p.id
-                      ? 'bg-slate-900 border-cyan-500 shadow-lg shadow-cyan-500/10'
-                      : 'bg-slate-950 border-slate-800 hover:bg-slate-900/60'
+                      ? 'bg-white dark:bg-slate-900 border-cyan-500 shadow-lg shadow-cyan-500/10'
+                      : 'bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:bg-slate-200 dark:hover:bg-slate-900/60'
                   }`}
                 >
-                  <h4 className="text-sm font-bold text-white">{p.firstName} {p.lastName}</h4>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">{p.firstName} {p.lastName}</h4>
                   <span className="text-xs text-slate-400 block mt-0.5">Blood Type: {p.bloodType}</span>
                 </div>
               ))}
             </div>
 
             {/* Copilot Brief Output */}
-            <div className="lg:col-span-2 p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-6">
+            <div className="lg:col-span-2 p-6 rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl space-y-6">
               <div className="flex items-center justify-between pb-4 border-b border-slate-800">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold">
                     <Sparkles className="w-5 h-5" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white">{brief?.patientName || 'Patient Brief'}</h2>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">{brief?.patientName || 'Patient Brief'}</h2>
                     <span className="text-xs text-slate-400">
                       Age: {brief?.age} • Gender: {brief?.gender} • Blood Type: {brief?.bloodType}
                     </span>
@@ -103,7 +103,7 @@ export default function DoctorCopilotPage() {
                     <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
                       <span className="text-amber-400 font-bold uppercase tracking-wider block mb-2">Critical Anomaly Alerts</span>
                       <ul className="space-y-1 text-amber-200">
-                        {brief?.criticalLabAlerts.map((a, i) => (
+                        {(brief?.criticalLabAlerts ?? []).map((a, i) => (
                           <li key={i} className="flex items-center gap-2">
                             <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> {a}
                           </li>
@@ -114,7 +114,7 @@ export default function DoctorCopilotPage() {
                     <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
                       <span className="text-teal-400 font-bold uppercase tracking-wider block mb-2">Active Prescriptions</span>
                       <ul className="space-y-1 text-slate-300">
-                        {brief?.activeMedications.map((m, i) => (
+                        {(brief?.activeMedications ?? []).map((m, i) => (
                           <li key={i}>• {m}</li>
                         ))}
                       </ul>
@@ -124,7 +124,7 @@ export default function DoctorCopilotPage() {
                   <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
                     <span className="text-cyan-400 font-bold uppercase tracking-wider block mb-2">Recommended Consultation Focus</span>
                     <ul className="space-y-2 text-slate-200">
-                      {brief?.recommendedClinicalFocus.map((rec, i) => (
+                      {(brief?.recommendedClinicalFocus ?? []).map((rec, i) => (
                         <li key={i} className="flex items-start gap-2">
                           <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" /> {rec}
                         </li>

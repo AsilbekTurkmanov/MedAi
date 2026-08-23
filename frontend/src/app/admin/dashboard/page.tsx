@@ -18,7 +18,7 @@ export default function AdminDashboardPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-300">
       <Navbar />
 
       <div className="flex flex-1">
@@ -27,8 +27,8 @@ export default function AdminDashboardPage() {
         <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-7xl">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-                <ShieldCheck className="w-8 h-8 text-indigo-400" /> Platform Administration
+              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+                <ShieldCheck className="w-8 h-8 text-indigo-600 dark:text-indigo-400" /> Platform Administration
               </h1>
               <p className="text-sm text-slate-400 mt-1">
                 System performance metrics, registered accounts, clinic rosters, and live audit logs.
@@ -38,7 +38,7 @@ export default function AdminDashboardPage() {
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-            <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center gap-4">
+            <div className="p-5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
                 <Users className="w-6 h-6" />
               </div>
@@ -80,10 +80,10 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl">
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Users className="w-5 h-5 text-blue-400" /> Admin Navigation
+                <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" /> Admin Navigation
                 </h3>
               </div>
               <div className="grid grid-cols-2 gap-4 text-xs font-bold">
@@ -96,8 +96,8 @@ export default function AdminDashboardPage() {
               </div>
             </div>
 
-            <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl">
-              <h3 className="text-base font-bold text-white flex items-center gap-2 mb-4">
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-4">
                 <Activity className="w-5 h-5 text-teal-400" /> System Security Status
               </h3>
               <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs space-y-2 text-slate-300">

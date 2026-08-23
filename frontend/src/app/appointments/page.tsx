@@ -6,7 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import { patientService, doctorService, appointmentService } from '@/services/allServices';
 import { Appointment, DoctorProfile } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
-import { Calendar, Stethoscope, Clock, Plus, CheckCircle2, XCircle } from 'lucide-react';
+import { Calendar, Stethoscope, Clock, Plus } from 'lucide-react';
 
 export default function AppointmentsPage() {
   const { t } = useLanguage();
@@ -87,7 +87,13 @@ export default function AppointmentsPage() {
 
           {/* Appointments Grid */}
           <div className="space-y-4">
-            {appointments.map((appt) => (
+            {appointments.length === 0 ? (
+              <div className="py-16 text-center">
+                <Calendar className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-500 dark:text-slate-400 text-sm">Hozircha rejalashtirilgan qabullar mavjud emas.</p>
+              </div>
+            ) : (
+            appointments.map((appt) => (
               <div key={appt.id} className="p-6 rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center font-bold">
@@ -113,7 +119,8 @@ export default function AppointmentsPage() {
                   </span>
                 </div>
               </div>
-            ))}
+            ))
+            )}
           </div>
 
           {/* Booking Modal */}

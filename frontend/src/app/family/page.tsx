@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import { useLanguage } from '@/context/LanguageContext';
-import { Users, Plus, HeartPulse, Award, Calendar, ShieldCheck, UserCheck } from 'lucide-react';
+import { Users, Plus } from 'lucide-react';
 
 export default function FamilyHubPage() {
   const { t } = useLanguage();

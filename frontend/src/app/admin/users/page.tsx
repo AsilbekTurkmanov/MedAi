@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import { adminService } from '@/services/allServices';
 import { useLanguage } from '@/context/LanguageContext';
-import { Users, Search, ShieldCheck, Lock, Unlock } from 'lucide-react';
+import { Users, Lock, Unlock } from 'lucide-react';
 
 export default function AdminUsersPage() {
   const { t } = useLanguage();

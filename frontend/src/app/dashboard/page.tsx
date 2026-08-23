@@ -100,7 +100,7 @@ export default function PatientDashboard() {
               </div>
               <div>
                 <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">{t.activeMedications}</span>
-                <span className="text-2xl font-extrabold text-slate-900 dark:text-white">{passport?.activeMedications.length || 0}</span>
+                <span className="text-2xl font-extrabold text-slate-900 dark:text-white">{passport?.activeMedications?.length ?? 0}</span>
               </div>
             </div>
 
@@ -204,7 +204,7 @@ export default function PatientDashboard() {
                 </h3>
 
                 <div className="space-y-3">
-                  {passport?.activeMedications.map((med, idx) => (
+                  {(passport?.activeMedications ?? []).map((med, idx) => (
                     <div key={idx} className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs">
                       <span className="font-bold text-slate-900 dark:text-white block text-sm">{med.name}</span>
                       <span className="text-cyan-600 dark:text-cyan-400 block mt-0.5">{med.dosage} • {med.frequency}</span>

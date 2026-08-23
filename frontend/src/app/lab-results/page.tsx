@@ -6,7 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import { patientService, aiService } from '@/services/allServices';
 import { LabResult } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
-import { FlaskConical, Bot, Sparkles, AlertCircle, CheckCircle2, ChevronRight } from 'lucide-react';
+import { FlaskConical, Bot, Sparkles, CheckCircle2, ChevronRight } from 'lucide-react';
 
 export default function LabResultsPage() {
   const { t } = useLanguage();
@@ -58,7 +58,13 @@ export default function LabResultsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Lab List */}
             <div className="lg:col-span-1 space-y-3">
-              {labs.map((lab) => (
+              {labs.length === 0 ? (
+                <div className="py-12 text-center">
+                  <FlaskConical className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                  <p className="text-slate-500 dark:text-slate-400 text-xs">Tahlil natijalari topilmadi.</p>
+                </div>
+              ) : (
+              labs.map((lab) => (
                 <div
                   key={lab.id}
                   onClick={() => handleExplain(lab)}
@@ -81,7 +87,8 @@ export default function LabResultsPage() {
                     Me'yor: {lab.referenceRange} • {new Date(lab.testDate).toLocaleDateString()}
                   </span>
                 </div>
-              ))}
+              ))
+              )}
             </div>
 
             {/* AI Lab Breakdown Panel */}

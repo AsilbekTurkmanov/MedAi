@@ -24,7 +24,7 @@ export default function DoctorAppointmentsPage() {
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
       await doctorService.updateAppointmentStatus(id, status);
-      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+      setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: status as Appointment['status'] } : a));
     } catch (err) {
       console.error(err);
     }

@@ -6,7 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import { doctorService, aiService } from '@/services/allServices';
 import { Appointment, PatientProfile, DoctorBriefResponse } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
-import { Stethoscope, Users, Calendar, Bot, Sparkles, Activity, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Stethoscope, Users, Calendar, Bot, Sparkles, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function DoctorDashboard() {

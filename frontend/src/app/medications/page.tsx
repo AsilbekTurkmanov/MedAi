@@ -6,7 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import { patientService, medicationService } from '@/services/allServices';
 import { Medication } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
-import { Pill, Clock, Calendar, CheckCircle2, ShieldCheck, Plus } from 'lucide-react';
+import { Pill, Plus } from 'lucide-react';
 
 export default function MedicationsPage() {
   const { t } = useLanguage();
@@ -77,7 +77,13 @@ export default function MedicationsPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {meds.map((med) => (
+            {meds.length === 0 ? (
+              <div className="md:col-span-2 py-16 text-center">
+                <Pill className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-500 dark:text-slate-400 text-sm">Hozircha dori-darmonlar ro'yxati bo'sh.</p>
+              </div>
+            ) : (
+            meds.map((med) => (
               <div key={med.id} className="p-6 rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
@@ -99,7 +105,8 @@ export default function MedicationsPage() {
                   <span>{med.endDate ? `Tugash: ${new Date(med.endDate).toLocaleDateString()}` : 'Davom etmoqda'}</span>
                 </div>
               </div>
-            ))}
+            ))
+            )}
           </div>
 
           {/* Add Medication Modal */}

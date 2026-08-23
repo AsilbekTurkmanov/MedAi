@@ -6,7 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import { patientService, documentService } from '@/services/allServices';
 import { MedicalDocument } from '@/types';
 import { useLanguage } from '@/context/LanguageContext';
-import { FolderOpen, Upload, FileText, Bot, Sparkles, CheckCircle2, ShieldCheck, Plus } from 'lucide-react';
+import { FolderOpen, Upload, FileText, Sparkles, Plus } from 'lucide-react';
 
 export default function DocumentsPage() {
   const { t } = useLanguage();
@@ -70,7 +70,13 @@ export default function DocumentsPage() {
           </div>
 
           <div className="space-y-6">
-            {documents.map((doc) => (
+            {documents.length === 0 ? (
+              <div className="py-16 text-center">
+                <FolderOpen className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-500 dark:text-slate-400 text-sm">Hozircha yuklangan hujjatlar mavjud emas.</p>
+              </div>
+            ) : (
+            documents.map((doc) => (
               <div key={doc.id} className="p-6 rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-xl space-y-4">
                 <div className="flex flex-wrap justify-between items-start gap-4">
                   <div className="flex items-center gap-3">
@@ -100,7 +106,8 @@ export default function DocumentsPage() {
                   Matnli Ko'rinish: {doc.extractedText}
                 </div>
               </div>
-            ))}
+            ))
+            )}
           </div>
 
           {/* Upload Modal */}

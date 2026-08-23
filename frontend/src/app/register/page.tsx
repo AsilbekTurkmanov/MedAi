@@ -45,17 +45,17 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-300">
       <Navbar />
 
       <main className="flex-1 flex items-center justify-center p-6 my-8">
-        <div className="w-full max-w-lg p-8 bg-slate-900/90 border border-slate-800 rounded-3xl shadow-2xl backdrop-blur-xl">
+        <div className="w-full max-w-lg p-8 bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl backdrop-blur-xl">
           <div className="text-center mb-6">
             <div className="w-12 h-12 rounded-2xl bg-cyan-600/10 text-cyan-400 flex items-center justify-center mx-auto mb-3 border border-cyan-500/20">
               <HeartPulse className="w-6 h-6" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Create your MEDAI Account</h1>
-            <p className="text-xs text-slate-400 mt-1">Join the next-generation AI Healthcare Platform</p>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Create your MEDAI Account</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Join the next-generation AI Healthcare Platform</p>
           </div>
 
           {error && (
@@ -68,13 +68,13 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">First Name</label>
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">First Name</label>
                 <input
                   type="text"
                   required
                   value={formData.firstName}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500"
                   placeholder="Jane"
                 />
               </div>
@@ -149,6 +149,11 @@ export default function RegisterPage() {
               </button>
             </div>
           </form>
+
+          <div className="mt-6 text-center text-sm">
+            <span className="text-slate-500 dark:text-slate-400">Akkountingiz bormi? </span>
+            <Link href="/login" className="text-blue-600 dark:text-cyan-400 font-bold hover:underline">Tizimga kiring</Link>
+          </div>
         </div>
       </main>
     </div>

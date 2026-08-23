@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import { patientService } from '@/services/allServices';
 import { HealthPassport } from '@/types';
-import { Award, HeartPulse, Pill, FlaskConical, AlertTriangle, ShieldCheck, User, Phone, MapPin } from 'lucide-react';
+import { Award, HeartPulse, Pill, FlaskConical } from 'lucide-react';
 
 export default function HealthPassportPage() {
   const [passport, setPassport] = useState<HealthPassport | null>(null);
@@ -17,7 +17,7 @@ export default function HealthPassportPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col transition-colors duration-300">
       <Navbar />
 
       <div className="flex flex-1">
@@ -25,8 +25,8 @@ export default function HealthPassportPage() {
 
         <main className="flex-1 p-6 md:p-8 overflow-y-auto max-w-7xl">
           <div className="mb-8">
-            <h1 className="text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-              <Award className="w-8 h-8 text-cyan-400" /> Patient Health Passport
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+              <Award className="w-8 h-8 text-cyan-600 dark:text-cyan-400" /> Patient Health Passport
             </h1>
             <p className="text-sm text-slate-400 mt-1">
               Your official digital medical ID card for quick clinical reference and emergency identification.
@@ -89,7 +89,7 @@ export default function HealthPassportPage() {
                 <Pill className="w-5 h-5 text-cyan-400" /> Verified Prescriptions
               </h3>
               <div className="space-y-3 text-xs">
-                {passport?.activeMedications.map((m, i) => (
+                {(passport?.activeMedications ?? []).map((m, i) => (
                   <div key={i} className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center">
                     <div>
                       <span className="font-bold text-white text-sm block">{m.name}</span>
@@ -106,7 +106,7 @@ export default function HealthPassportPage() {
                 <FlaskConical className="w-5 h-5 text-teal-400" /> Recent Lab Indicators
               </h3>
               <div className="space-y-3 text-xs">
-                {passport?.recentLabResults.map((l, i) => (
+                {(passport?.recentLabResults ?? []).map((l, i) => (
                   <div key={i} className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center">
                     <div>
                       <span className="font-bold text-white text-sm block">{l.testName}</span>
