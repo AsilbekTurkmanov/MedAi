@@ -13,7 +13,7 @@ public static class DbInitializer
 {
     public static async Task SeedAsync(MedAiDbContext context, IPasswordHasher hasher)
     {
-        if (await context.Users.AnyAsync()) return;
+        if (await context.Users.AnyAsync(u => u.Email == "patient@medai.com")) return;
 
         // 1. Seed Clinic
         var clinic = new Clinic
