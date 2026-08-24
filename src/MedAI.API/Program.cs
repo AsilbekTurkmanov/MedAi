@@ -205,8 +205,8 @@ using (var scope = app.Services.CreateScope())
 
         if (usePostgres)
         {
-            await context.Database.MigrateAsync();
-            Log.Information("Database migration applied successfully.");
+            await context.Database.EnsureCreatedAsync();
+            Log.Information("PostgreSQL database schema ensured successfully.");
         }
         else
         {

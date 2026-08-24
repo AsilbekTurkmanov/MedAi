@@ -45,9 +45,11 @@ public class AuthController : ControllerBase
             PasswordHash = _hasher.HashPassword(request.Password),
             FirstName = request.FirstName,
             LastName = request.LastName,
-            PhoneNumber = request.PhoneNumber,
-            DateOfBirth = request.DateOfBirth,
-            Gender = request.Gender,
+            PhoneNumber = request.PhoneNumber ?? "",
+            DateOfBirth = request.DateOfBirth == default 
+                ? DateTime.SpecifyKind(new DateTime(1995, 1, 1), DateTimeKind.Utc) 
+                : DateTime.SpecifyKind(request.DateOfBirth.Date, DateTimeKind.Utc),
+            Gender = string.IsNullOrEmpty(request.Gender) ? "NotSpecified" : request.Gender,
             Role = request.Role,
             PreferredLanguage = request.PreferredLanguage,
             IsActive = true,

@@ -50,7 +50,7 @@ public class AppointmentsController : ControllerBase
         TimeSpan.TryParse(request.EndTime, out var endTime);
         if (endTime <= startTime) endTime = startTime.Add(TimeSpan.FromMinutes(30));
 
-        var appointmentDate = request.AppointmentDate.Date;
+        var appointmentDate = DateTime.SpecifyKind(request.AppointmentDate.Date, DateTimeKind.Utc);
 
         // Check if doctor is on leave on this date
         var isOnLeave = await _context.DoctorLeaves.AnyAsync(l => l.DoctorId == doctor.Id && l.StartDate <= appointmentDate && l.EndDate >= appointmentDate);
