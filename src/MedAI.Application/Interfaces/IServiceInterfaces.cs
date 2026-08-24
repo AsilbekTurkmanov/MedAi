@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using MedAI.Application.DTOs.AI;
+using MedAI.Application.DTOs.Clinical;
 
 namespace MedAI.Application.Interfaces;
 
@@ -10,8 +11,10 @@ public interface IAIService
     Task<SymptomAnalysisResponseDto> AnalyzeSymptomsAsync(SymptomAnalysisRequestDto request);
     Task<LabExplanationResponseDto> ExplainLabResultAsync(Guid labResultId);
     Task<DocumentAnalysisResponseDto> AnalyzeDocumentAsync(Guid documentId);
+    Task<DocumentAnalysisResponseDto> AnalyzeDocumentAsync(string fileName, string extractedText);
     Task<MedicalSummaryResponseDto> GenerateMedicalSummaryAsync(Guid patientId);
     Task<DoctorBriefResponseDto> GenerateDoctorBriefAsync(Guid patientId);
+    Task<AIHandoffSummaryDto> GenerateHandoffSummaryAsync(Guid sessionId, Guid patientId);
     Task<TermExplanationResponseDto> ExplainMedicalTermAsync(string term);
     Task<HealthEducationResponseDto> GenerateHealthEducationAsync(string topic, string language);
 }

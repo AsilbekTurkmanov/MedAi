@@ -205,9 +205,12 @@ public static class DbInitializer
         {
             Id = Guid.NewGuid(),
             PatientId = patientProfile.Id,
+            PrescribedByDoctorId = doctorProfile.Id,
             Name = "Lisinopril (DEMO)",
             Dosage = "10 mg",
             Frequency = "Once daily in the morning",
+            Instructions = "Take on an empty stomach. Monitor blood pressure regularly.",
+            Status = MedicationStatus.Active,
             StartDate = DateTime.UtcNow.AddMonths(-3),
             EndDate = null,
             Notes = "Prescribed for blood pressure management.",
@@ -221,6 +224,8 @@ public static class DbInitializer
             Name = "Omega-3 Fish Oil (DEMO)",
             Dosage = "1000 mg",
             Frequency = "Twice daily with meals",
+            Instructions = "Take with food to improve absorption.",
+            Status = MedicationStatus.Active,
             StartDate = DateTime.UtcNow.AddMonths(-6),
             EndDate = null,
             Notes = "Cardiovascular wellness supplement.",
@@ -237,9 +242,11 @@ public static class DbInitializer
             FileName = "Cardiology_Echocardiogram_Summary_DEMO.pdf",
             FileType = "application/pdf",
             FileUrl = "/storage/documents/cardio_demo.pdf",
+            FileSizeBytes = 245760,
             DocumentType = DocumentType.DischargeSummary,
             ExtractedText = "Echocardiogram Report: Left ventricular ejection fraction 62%. Normal valvular movement. No pericardial effusion.",
             AISummary = "AI Summary: Echocardiogram demonstrates preserved ejection fraction (62%) with healthy cardiac structure and no acute pathology.",
+            IsProcessed = true,
             UploadedAt = DateTime.UtcNow.AddDays(-5)
         };
         context.MedicalDocuments.Add(doc);
@@ -266,10 +273,154 @@ public static class DbInitializer
             Title = "Upcoming Appointment Reminder",
             Message = "You have an appointment with Dr. Alexander Vance on " + DateTime.UtcNow.AddDays(2).ToString("MMM dd, yyyy at 10:00 AM") + ".",
             Type = NotificationType.AppointmentReminder,
+            Priority = NotificationPriority.Normal,
+            ActionUrl = "/appointments",
             IsRead = false,
             CreatedAt = DateTime.UtcNow
         };
         context.Notifications.Add(notif1);
+
+        // 12. Seed Allergies (Phase 2)
+        context.Allergies.AddRange(
+            new Allergy
+            {
+                Id = Guid.NewGuid(),
+                PatientId = patientProfile.Id,
+                Name = "Penicillin",
+                Severity = AllergySeverity.Moderate,
+                Reaction = "Skin rash, mild hives",
+                DiagnosedDate = new DateTime(2018, 3, 15),
+                Source = "Doctor",
+                CreatedByUserId = doctorUser.Id,
+                CreatedAt = DateTime.UtcNow
+            },
+            new Allergy
+            {
+                Id = Guid.NewGuid(),
+                PatientId = patientProfile.Id,
+                Name = "Shellfish",
+                Severity = AllergySeverity.Mild,
+                Reaction = "Mild stomach discomfort",
+                DiagnosedDate = new DateTime(2020, 7, 10),
+                Source = "Patient",
+                CreatedByUserId = patientUser.Id,
+                CreatedAt = DateTime.UtcNow
+            }
+        );
+
+        // 13. Seed Chronic Conditions (Phase 2)
+        context.ChronicConditions.Add(new ChronicCondition
+        {
+            Id = Guid.NewGuid(),
+            PatientId = patientProfile.Id,
+            Name = "Essential Hypertension (Stage 1)",
+            DiagnosedDate = new DateTime(2023, 1, 20),
+            Status = ChronicConditionStatus.Active,
+            Notes = "Managed with Lisinopril 10mg daily. Blood pressure target: < 130/80 mmHg.",
+            Source = "Doctor",
+            CreatedByUserId = doctorUser.Id,
+            CreatedAt = DateTime.UtcNow
+        });
+
+        // 14. Seed Vaccinations (Phase 2)
+        context.Vaccinations.AddRange(
+            new Vaccination
+            {
+                Id = Guid.NewGuid(),
+                PatientId = patientProfile.Id,
+                Name = "COVID-19 (Pfizer-BioNTech)",
+                DateAdministered = new DateTime(2021, 4, 15),
+                Provider = "City Health Department",
+                DoseNumber = 2,
+                Notes = "Second dose completed.",
+                Source = "Patient",
+                CreatedAt = DateTime.UtcNow
+            },
+            new Vaccination
+            {
+                Id = Guid.NewGuid(),
+                PatientId = patientProfile.Id,
+                Name = "Influenza (Seasonal Flu)",
+                DateAdministered = new DateTime(2025, 10, 5),
+                Provider = "MedAI Central Clinic",
+                DoseNumber = 1,
+                Notes = "Annual flu vaccination.",
+                Source = "Doctor",
+                CreatedAt = DateTime.UtcNow
+            }
+        );
+
+        // 15. Seed Health Events
+        context.HealthEvents.AddRange(
+            new HealthEvent
+            {
+                Id = Guid.NewGuid(),
+                PatientId = patientProfile.Id,
+                Type = HealthEventType.Diagnosis,
+                Title = "Essential Hypertension Diagnosed",
+                Description = "Stage 1 hypertension diagnosed during routine checkup. BP: 142/88 mmHg.",
+                EventDate = new DateTime(2023, 1, 20),
+                CreatedAt = DateTime.UtcNow
+            },
+            new HealthEvent
+            {
+                Id = Guid.NewGuid(),
+                PatientId = patientProfile.Id,
+                Type = HealthEventType.Symptom,
+                Title = "Mild evening headaches",
+                Description = "Patient reported recurring mild headaches in the evening, potentially related to screen time or blood pressure.",
+                EventDate = DateTime.UtcNow.AddDays(-7),
+                CreatedAt = DateTime.UtcNow.AddDays(-7)
+            }
+        );
+
+        // 16. Seed Doctor Schedule (Phase 4)
+        var daysOfWeek = new[] { DayOfWeekEnum.Monday, DayOfWeekEnum.Tuesday, DayOfWeekEnum.Wednesday, DayOfWeekEnum.Thursday, DayOfWeekEnum.Friday };
+        foreach (var day in daysOfWeek)
+        {
+            context.DoctorSchedules.Add(new DoctorSchedule
+            {
+                Id = Guid.NewGuid(),
+                DoctorId = doctorProfile.Id,
+                DayOfWeek = day,
+                StartTime = new TimeSpan(9, 0, 0),
+                EndTime = new TimeSpan(17, 0, 0),
+                SlotDurationMinutes = 30,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        // 17. Seed Doctor Note
+        context.DoctorNotes.Add(new DoctorNote
+        {
+            Id = Guid.NewGuid(),
+            DoctorId = doctorProfile.Id,
+            PatientId = patientProfile.Id,
+            AppointmentId = appt2.Id,
+            Content = "Patient is compliant with medication regimen. BP trending toward target. Recommend continued monitoring and follow-up lipid panel in 3 months.",
+            CreatedAt = DateTime.UtcNow.AddDays(-14),
+            UpdatedAt = DateTime.UtcNow.AddDays(-14)
+        });
+
+        // 18. Seed Medical Term Mappings (Phase 13)
+        context.MedicalTermMappings.AddRange(
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "bosh og'rig'i", RussianTerm = "головная боль", EnglishTerm = "headache", Category = "Symptom" },
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "isitma", RussianTerm = "температура", EnglishTerm = "fever", Category = "Symptom" },
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "yo'tal", RussianTerm = "кашель", EnglishTerm = "cough", Category = "Symptom" },
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "ko'krak og'rig'i", RussianTerm = "боль в груди", EnglishTerm = "chest pain", Category = "Symptom" },
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "nafas qisishi", RussianTerm = "одышка", EnglishTerm = "shortness of breath", Category = "Symptom" },
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "qorin og'rig'i", RussianTerm = "боль в животе", EnglishTerm = "abdominal pain", Category = "Symptom" },
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "bosh aylanishi", RussianTerm = "головокружение", EnglishTerm = "dizziness", Category = "Symptom" },
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "holsizlik", RussianTerm = "слабость", EnglishTerm = "fatigue", Category = "Symptom" },
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "yurak urishi tezlashishi", RussianTerm = "учащённое сердцебиение", EnglishTerm = "rapid heartbeat", Category = "Symptom" },
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "qon bosimi", RussianTerm = "артериальное давление", EnglishTerm = "blood pressure", Category = "Vital Sign" },
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "qandli diabet", RussianTerm = "сахарный диабет", EnglishTerm = "diabetes mellitus", Category = "Condition" },
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "gipertoniya", RussianTerm = "гипертония", EnglishTerm = "hypertension", Category = "Condition" },
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "allergiya", RussianTerm = "аллергия", EnglishTerm = "allergy", Category = "Condition" },
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "emlash", RussianTerm = "вакцинация", EnglishTerm = "vaccination", Category = "Procedure" },
+            new MedicalTermMapping { Id = Guid.NewGuid(), UzbekTerm = "qon tahlili", RussianTerm = "анализ крови", EnglishTerm = "blood test", Category = "Procedure" }
+        );
 
         await context.SaveChangesAsync();
     }

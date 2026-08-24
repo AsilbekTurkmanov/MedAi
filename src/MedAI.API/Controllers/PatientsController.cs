@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using MedAI.Application.Common;
 using MedAI.Application.DTOs.Clinical;
 using MedAI.Application.Interfaces;
+using MedAI.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -92,6 +93,9 @@ public class PatientsController : ControllerBase
             .Include(p => p.Medications)
             .Include(p => p.LabResults)
             .Include(p => p.HealthEvents)
+            .Include(p => p.Allergies)
+            .Include(p => p.ChronicConditions)
+            .Include(p => p.Vaccinations)
             .FirstOrDefaultAsync(p => p.UserId == userId);
 
         if (patient == null) return NotFound(ApiResponse<HealthPassportDto>.Fail("Patient profile not found."));
@@ -108,12 +112,14 @@ public class PatientsController : ControllerBase
             Gender = patient.User.Gender,
             EmergencyContactName = patient.EmergencyContactName,
             EmergencyContactPhone = patient.EmergencyContactPhone,
-            ActiveMedications = patient.Medications.Select(m => new MedicationSummaryDto
-            {
-                Name = m.Name,
-                Dosage = m.Dosage,
-                Frequency = m.Frequency
-            }).ToList(),
+            ActiveMedications = patient.Medications
+                .Where(m => m.Status == Domain.Enums.MedicationStatus.Active)
+                .Select(m => new MedicationSummaryDto
+                {
+                    Name = m.Name,
+                    Dosage = m.Dosage,
+                    Frequency = m.Frequency
+                }).ToList(),
             RecentLabResults = patient.LabResults.OrderByDescending(l => l.TestDate).Take(5).Select(l => new LabSummaryDto
             {
                 TestName = l.TestName,
@@ -131,10 +137,280 @@ public class PatientsController : ControllerBase
                 Description = e.Description,
                 EventDate = e.EventDate,
                 CreatedAt = e.CreatedAt
+            }).ToList(),
+            Allergies = patient.Allergies.Select(a => new AllergyDto
+            {
+                Id = a.Id,
+                PatientId = a.PatientId,
+                Name = a.Name,
+                Severity = a.Severity,
+                Reaction = a.Reaction,
+                DiagnosedDate = a.DiagnosedDate,
+                Source = a.Source,
+                CreatedAt = a.CreatedAt
+            }).ToList(),
+            ChronicConditions = patient.ChronicConditions.Select(c => new ChronicConditionDto
+            {
+                Id = c.Id,
+                PatientId = c.PatientId,
+                Name = c.Name,
+                DiagnosedDate = c.DiagnosedDate,
+                Status = c.Status,
+                Notes = c.Notes,
+                Source = c.Source,
+                CreatedAt = c.CreatedAt
+            }).ToList(),
+            Vaccinations = patient.Vaccinations.Select(v => new VaccinationDto
+            {
+                Id = v.Id,
+                PatientId = v.PatientId,
+                Name = v.Name,
+                DateAdministered = v.DateAdministered,
+                Provider = v.Provider,
+                DoseNumber = v.DoseNumber,
+                Notes = v.Notes,
+                CreatedAt = v.CreatedAt
             }).ToList()
         };
 
         return Ok(ApiResponse<HealthPassportDto>.Ok(dto));
+    }
+
+    [HttpGet("me/allergies")]
+    public async Task<ActionResult<ApiResponse<List<AllergyDto>>>> GetMyAllergies()
+    {
+        var userId = GetCurrentUserId();
+        var patient = await _context.PatientProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null) return NotFound(ApiResponse<List<AllergyDto>>.Fail("Patient profile not found."));
+
+        var allergies = await _context.Allergies
+            .Where(a => a.PatientId == patient.Id)
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(a => new AllergyDto
+            {
+                Id = a.Id,
+                PatientId = a.PatientId,
+                Name = a.Name,
+                Severity = a.Severity,
+                Reaction = a.Reaction,
+                DiagnosedDate = a.DiagnosedDate,
+                Source = a.Source,
+                CreatedAt = a.CreatedAt
+            }).ToListAsync();
+
+        return Ok(ApiResponse<List<AllergyDto>>.Ok(allergies));
+    }
+
+    [HttpPost("me/allergies")]
+    public async Task<ActionResult<ApiResponse<AllergyDto>>> CreateAllergy([FromBody] CreateAllergyDto request)
+    {
+        var userId = GetCurrentUserId();
+        var patient = await _context.PatientProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null) return NotFound(ApiResponse<AllergyDto>.Fail("Patient profile not found."));
+
+        var allergy = new Allergy
+        {
+            PatientId = patient.Id,
+            Name = request.Name,
+            Severity = request.Severity,
+            Reaction = request.Reaction,
+            DiagnosedDate = request.DiagnosedDate,
+            Source = "Patient",
+            CreatedByUserId = userId,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.Allergies.Add(allergy);
+        await _context.SaveChangesAsync();
+
+        var dto = new AllergyDto
+        {
+            Id = allergy.Id,
+            PatientId = allergy.PatientId,
+            Name = allergy.Name,
+            Severity = allergy.Severity,
+            Reaction = allergy.Reaction,
+            DiagnosedDate = allergy.DiagnosedDate,
+            Source = allergy.Source,
+            CreatedAt = allergy.CreatedAt
+        };
+
+        return Ok(ApiResponse<AllergyDto>.Ok(dto, "Allergy recorded successfully."));
+    }
+
+    [HttpDelete("me/allergies/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<bool>>> DeleteAllergy(Guid id)
+    {
+        var userId = GetCurrentUserId();
+        var patient = await _context.PatientProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null) return NotFound(ApiResponse<bool>.Fail("Patient profile not found."));
+
+        var allergy = await _context.Allergies.FirstOrDefaultAsync(a => a.Id == id && a.PatientId == patient.Id);
+        if (allergy == null) return NotFound(ApiResponse<bool>.Fail("Allergy record not found."));
+
+        _context.Allergies.Remove(allergy);
+        await _context.SaveChangesAsync();
+
+        return Ok(ApiResponse<bool>.Ok(true, "Allergy record deleted."));
+    }
+
+    [HttpGet("me/chronic-conditions")]
+    public async Task<ActionResult<ApiResponse<List<ChronicConditionDto>>>> GetMyChronicConditions()
+    {
+        var userId = GetCurrentUserId();
+        var patient = await _context.PatientProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null) return NotFound(ApiResponse<List<ChronicConditionDto>>.Fail("Patient profile not found."));
+
+        var conditions = await _context.ChronicConditions
+            .Where(c => c.PatientId == patient.Id)
+            .OrderByDescending(c => c.CreatedAt)
+            .Select(c => new ChronicConditionDto
+            {
+                Id = c.Id,
+                PatientId = c.PatientId,
+                Name = c.Name,
+                DiagnosedDate = c.DiagnosedDate,
+                Status = c.Status,
+                Notes = c.Notes,
+                Source = c.Source,
+                CreatedAt = c.CreatedAt
+            }).ToListAsync();
+
+        return Ok(ApiResponse<List<ChronicConditionDto>>.Ok(conditions));
+    }
+
+    [HttpPost("me/chronic-conditions")]
+    public async Task<ActionResult<ApiResponse<ChronicConditionDto>>> CreateChronicCondition([FromBody] CreateChronicConditionDto request)
+    {
+        var userId = GetCurrentUserId();
+        var patient = await _context.PatientProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null) return NotFound(ApiResponse<ChronicConditionDto>.Fail("Patient profile not found."));
+
+        var condition = new ChronicCondition
+        {
+            PatientId = patient.Id,
+            Name = request.Name,
+            DiagnosedDate = request.DiagnosedDate,
+            Status = request.Status,
+            Notes = request.Notes,
+            Source = "Patient",
+            CreatedByUserId = userId,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.ChronicConditions.Add(condition);
+        await _context.SaveChangesAsync();
+
+        var dto = new ChronicConditionDto
+        {
+            Id = condition.Id,
+            PatientId = condition.PatientId,
+            Name = condition.Name,
+            DiagnosedDate = condition.DiagnosedDate,
+            Status = condition.Status,
+            Notes = condition.Notes,
+            Source = condition.Source,
+            CreatedAt = condition.CreatedAt
+        };
+
+        return Ok(ApiResponse<ChronicConditionDto>.Ok(dto, "Chronic condition recorded."));
+    }
+
+    [HttpDelete("me/chronic-conditions/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<bool>>> DeleteChronicCondition(Guid id)
+    {
+        var userId = GetCurrentUserId();
+        var patient = await _context.PatientProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null) return NotFound(ApiResponse<bool>.Fail("Patient profile not found."));
+
+        var condition = await _context.ChronicConditions.FirstOrDefaultAsync(c => c.Id == id && c.PatientId == patient.Id);
+        if (condition == null) return NotFound(ApiResponse<bool>.Fail("Chronic condition record not found."));
+
+        _context.ChronicConditions.Remove(condition);
+        await _context.SaveChangesAsync();
+
+        return Ok(ApiResponse<bool>.Ok(true, "Chronic condition deleted."));
+    }
+
+    [HttpGet("me/vaccinations")]
+    public async Task<ActionResult<ApiResponse<List<VaccinationDto>>>> GetMyVaccinations()
+    {
+        var userId = GetCurrentUserId();
+        var patient = await _context.PatientProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null) return NotFound(ApiResponse<List<VaccinationDto>>.Fail("Patient profile not found."));
+
+        var vax = await _context.Vaccinations
+            .Where(v => v.PatientId == patient.Id)
+            .OrderByDescending(v => v.DateAdministered)
+            .Select(v => new VaccinationDto
+            {
+                Id = v.Id,
+                PatientId = v.PatientId,
+                Name = v.Name,
+                DateAdministered = v.DateAdministered,
+                Provider = v.Provider,
+                DoseNumber = v.DoseNumber,
+                Notes = v.Notes,
+                CreatedAt = v.CreatedAt
+            }).ToListAsync();
+
+        return Ok(ApiResponse<List<VaccinationDto>>.Ok(vax));
+    }
+
+    [HttpPost("me/vaccinations")]
+    public async Task<ActionResult<ApiResponse<VaccinationDto>>> CreateVaccination([FromBody] CreateVaccinationDto request)
+    {
+        var userId = GetCurrentUserId();
+        var patient = await _context.PatientProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null) return NotFound(ApiResponse<VaccinationDto>.Fail("Patient profile not found."));
+
+        var vax = new Vaccination
+        {
+            PatientId = patient.Id,
+            Name = request.Name,
+            DateAdministered = request.DateAdministered,
+            Provider = request.Provider,
+            DoseNumber = request.DoseNumber,
+            Notes = request.Notes,
+            Source = "Patient",
+            CreatedByUserId = userId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Vaccinations.Add(vax);
+        await _context.SaveChangesAsync();
+
+        var dto = new VaccinationDto
+        {
+            Id = vax.Id,
+            PatientId = vax.PatientId,
+            Name = vax.Name,
+            DateAdministered = vax.DateAdministered,
+            Provider = vax.Provider,
+            DoseNumber = vax.DoseNumber,
+            Notes = vax.Notes,
+            CreatedAt = vax.CreatedAt
+        };
+
+        return Ok(ApiResponse<VaccinationDto>.Ok(dto, "Vaccination recorded."));
+    }
+
+    [HttpDelete("me/vaccinations/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<bool>>> DeleteVaccination(Guid id)
+    {
+        var userId = GetCurrentUserId();
+        var patient = await _context.PatientProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
+        if (patient == null) return NotFound(ApiResponse<bool>.Fail("Patient profile not found."));
+
+        var vax = await _context.Vaccinations.FirstOrDefaultAsync(v => v.Id == id && v.PatientId == patient.Id);
+        if (vax == null) return NotFound(ApiResponse<bool>.Fail("Vaccination record not found."));
+
+        _context.Vaccinations.Remove(vax);
+        await _context.SaveChangesAsync();
+
+        return Ok(ApiResponse<bool>.Ok(true, "Vaccination deleted."));
     }
 
     [HttpGet("me/timeline")]
@@ -160,7 +436,8 @@ public class PatientsController : ControllerBase
                 Title = $"Appointment with Dr. {a.Doctor.User.LastName}",
                 Description = $"{a.Reason} ({a.Status})",
                 Date = a.AppointmentDate,
-                BadgeColor = "blue"
+                BadgeColor = "blue",
+                DetailsUrl = "/appointments"
             });
         }
 
@@ -174,7 +451,8 @@ public class PatientsController : ControllerBase
                 Title = $"Lab Result: {l.TestName}",
                 Description = $"Value: {l.Value} {l.Unit} ({l.Status})",
                 Date = l.TestDate,
-                BadgeColor = l.Status == Domain.Enums.LabResultStatus.Normal ? "emerald" : "amber"
+                BadgeColor = l.Status == Domain.Enums.LabResultStatus.Normal ? "emerald" : "amber",
+                DetailsUrl = "/lab-results"
             });
         }
 
@@ -188,7 +466,53 @@ public class PatientsController : ControllerBase
                 Title = $"Document: {d.FileName}",
                 Description = d.AISummary,
                 Date = d.UploadedAt,
-                BadgeColor = "purple"
+                BadgeColor = "purple",
+                DetailsUrl = "/documents"
+            });
+        }
+
+        var meds = await _context.Medications.Where(m => m.PatientId == patient.Id).ToListAsync();
+        foreach (var m in meds)
+        {
+            timeline.Add(new TimelineItemDto
+            {
+                Id = m.Id,
+                Category = "Medication",
+                Title = $"Medication: {m.Name}",
+                Description = $"{m.Dosage} • {m.Frequency}",
+                Date = m.StartDate,
+                BadgeColor = "cyan",
+                DetailsUrl = "/medications"
+            });
+        }
+
+        var events = await _context.HealthEvents.Where(e => e.PatientId == patient.Id).ToListAsync();
+        foreach (var e in events)
+        {
+            timeline.Add(new TimelineItemDto
+            {
+                Id = e.Id,
+                Category = "HealthEvent",
+                Title = e.Title,
+                Description = e.Description,
+                Date = e.EventDate,
+                BadgeColor = "indigo",
+                DetailsUrl = "/timeline"
+            });
+        }
+
+        var vaxList = await _context.Vaccinations.Where(v => v.PatientId == patient.Id).ToListAsync();
+        foreach (var v in vaxList)
+        {
+            timeline.Add(new TimelineItemDto
+            {
+                Id = v.Id,
+                Category = "Vaccination",
+                Title = $"Vaccine: {v.Name}",
+                Description = $"Dose #{v.DoseNumber} by {v.Provider}",
+                Date = v.DateAdministered,
+                BadgeColor = "teal",
+                DetailsUrl = "/health-passport"
             });
         }
 
@@ -214,9 +538,11 @@ public class PatientsController : ControllerBase
                 FileName = d.FileName,
                 FileType = d.FileType,
                 FileUrl = d.FileUrl,
+                FileSizeBytes = d.FileSizeBytes,
                 DocumentType = d.DocumentType,
                 ExtractedText = d.ExtractedText,
                 AISummary = d.AISummary,
+                IsProcessed = d.IsProcessed,
                 UploadedAt = d.UploadedAt
             }).ToListAsync();
 
@@ -261,15 +587,20 @@ public class PatientsController : ControllerBase
         if (patient == null) return NotFound(ApiResponse<List<MedicationDto>>.Fail("Patient profile not found."));
 
         var meds = await _context.Medications
+            .Include(m => m.PrescribedByDoctor).ThenInclude(d => d!.User)
             .Where(m => m.PatientId == patient.Id)
             .OrderByDescending(m => m.StartDate)
             .Select(m => new MedicationDto
             {
                 Id = m.Id,
                 PatientId = m.PatientId,
+                PrescribedByDoctorId = m.PrescribedByDoctorId,
+                PrescribedByDoctorName = m.PrescribedByDoctor != null ? $"Dr. {m.PrescribedByDoctor.User.FirstName} {m.PrescribedByDoctor.User.LastName}" : string.Empty,
                 Name = m.Name,
                 Dosage = m.Dosage,
                 Frequency = m.Frequency,
+                Instructions = m.Instructions,
+                Status = m.Status,
                 StartDate = m.StartDate,
                 EndDate = m.EndDate,
                 Notes = m.Notes,

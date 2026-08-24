@@ -22,13 +22,13 @@ jobs:
           include-prerelease: true
 
       - name: Restore Dependencies
-        run: dotnet restore MedAI.sln
+        run: dotnet restore MedAI.slnx
 
       - name: Build Solution
-        run: dotnet build MedAI.sln --no-restore -c Release
+        run: dotnet build MedAI.slnx --no-restore -c Release
 
       - name: Run Unit Tests
-        run: dotnet test MedAI.sln --no-build -c Release --verbosity normal
+        run: dotnet test MedAI.slnx --no-build -c Release --verbosity normal
 
       - name: Setup Node.js 20
         uses: actions/setup-node@v4

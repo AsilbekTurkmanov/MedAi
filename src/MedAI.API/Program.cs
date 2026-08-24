@@ -17,12 +17,18 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Serilog Setup
+// 1. Serilog Setup — Structured logging with enrichment
 Log.Logger = new LoggerConfiguration()
-    .WriteTo.Console()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+    .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Application", "MedAI")
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} {Properties:j}{NewLine}{Exception}")
     .CreateLogger();
 builder.Host.UseSerilog();
 
@@ -57,16 +63,23 @@ else
 builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<MedAiDbContext>());
 
 // 3. Application & Infrastructure Services DI
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddTransient<IJwtTokenGenerator, JwtTokenGenerator>();
 builder.Services.AddScoped<IAIService, AIService>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // 4. FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 
 // 5. Authentication & JWT Setup
-var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "MedAI_Super_Secret_JWT_Key_2026_For_Healthcare_Platform_Security!";
+var jwtSecret = builder.Configuration["Jwt:Secret"]
+    ?? Environment.GetEnvironmentVariable("JWT_SECRET")
+    ?? (builder.Environment.IsDevelopment()
+        ? "MedAI_Dev_Secret_Key_2026_Not_For_Production_Use_MinLength64Chars!!"
+        : throw new InvalidOperationException("JWT_SECRET environment variable is required in production."));
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -95,15 +108,28 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
 
-// 7. CORS Configuration (Allows any origin in development so port changes like 3000, 3001, 3002, 3003 work seamlessly)
+// 7. CORS Configuration
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? new[] { "http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://localhost:3003", "http://localhost:3010" };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.SetIsOriginAllowed(_ => true)
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
+        if (builder.Environment.IsDevelopment())
+        {
+            policy.SetIsOriginAllowed(_ => true)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
+        else
+        {
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        }
     });
 });
 
@@ -146,22 +172,26 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// 9. Middleware Pipeline
+// 9. Middleware Pipeline — order matters
+app.UseMiddleware<CorrelationIdMiddleware>();
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-if (app.Environment.IsDevelopment())
+// Swagger available in all environments
+app.UseSwagger();
+app.UseSwaggerUI(c =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "MedAI API v1");
-        c.DocumentTitle = "MedAI API Documentation";
-    });
-}
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "MedAI API v1");
+    c.DocumentTitle = "MedAI API Documentation";
+});
 
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Static files for document uploads
+app.UseStaticFiles();
+
 app.MapControllers();
 
 // 10. Auto Migration & Seed Data Execution
@@ -173,8 +203,17 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<MedAiDbContext>();
         var hasher = services.GetRequiredService<IPasswordHasher>();
 
-        // Ensure database created and seeded
-        await context.Database.EnsureCreatedAsync();
+        if (usePostgres)
+        {
+            await context.Database.MigrateAsync();
+            Log.Information("Database migration applied successfully.");
+        }
+        else
+        {
+            await context.Database.EnsureCreatedAsync();
+            Log.Information("InMemory database created successfully.");
+        }
+
         await DbInitializer.SeedAsync(context, hasher);
         Log.Information("Database initialization and seed data populated successfully.");
     }

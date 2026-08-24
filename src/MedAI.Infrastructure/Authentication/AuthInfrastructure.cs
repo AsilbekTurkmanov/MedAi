@@ -36,7 +36,9 @@ public class JwtTokenGenerator : IJwtTokenGenerator
 
     public string GenerateAccessToken(User user)
     {
-        var secret = _config["Jwt:Secret"] ?? "MedAI_Super_Secret_JWT_Key_2026_For_Healthcare_Platform_Security!";
+        var secret = _config["Jwt:Secret"]
+            ?? Environment.GetEnvironmentVariable("JWT_SECRET")
+            ?? "MedAI_Dev_Secret_Key_2026_Not_For_Production_Use_MinLength64Chars!!";
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -79,7 +81,9 @@ public class JwtTokenGenerator : IJwtTokenGenerator
 
     public ClaimsPrincipal? GetPrincipalFromExpiredToken(string token)
     {
-        var secret = _config["Jwt:Secret"] ?? "MedAI_Super_Secret_JWT_Key_2026_For_Healthcare_Platform_Security!";
+        var secret = _config["Jwt:Secret"]
+            ?? Environment.GetEnvironmentVariable("JWT_SECRET")
+            ?? "MedAI_Dev_Secret_Key_2026_Not_For_Production_Use_MinLength64Chars!!";
         var tokenValidationParameters = new TokenValidationParameters
         {
             ValidateAudience = false,

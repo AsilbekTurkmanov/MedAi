@@ -52,6 +52,11 @@ public class PatientProfile
     public ICollection<HealthEvent> HealthEvents { get; set; } = new List<HealthEvent>();
     public ICollection<FamilyMember> FamilyMembers { get; set; } = new List<FamilyMember>();
     public ICollection<DoctorNote> DoctorNotes { get; set; } = new List<DoctorNote>();
+    public ICollection<Allergy> Allergies { get; set; } = new List<Allergy>();
+    public ICollection<ChronicCondition> ChronicConditions { get; set; } = new List<ChronicCondition>();
+    public ICollection<Vaccination> Vaccinations { get; set; } = new List<Vaccination>();
+    public ICollection<DataConsent> DataConsents { get; set; } = new List<DataConsent>();
+    public ICollection<DataAccessLog> DataAccessLogs { get; set; } = new List<DataAccessLog>();
 }
 
 public class Clinic
@@ -90,6 +95,8 @@ public class DoctorProfile
     public ICollection<LabResult> LabResults { get; set; } = new List<LabResult>();
     public ICollection<Prescription> Prescriptions { get; set; } = new List<Prescription>();
     public ICollection<DoctorNote> DoctorNotes { get; set; } = new List<DoctorNote>();
+    public ICollection<DoctorSchedule> Schedules { get; set; } = new List<DoctorSchedule>();
+    public ICollection<DoctorLeave> Leaves { get; set; } = new List<DoctorLeave>();
 }
 
 public class Appointment
@@ -135,9 +142,11 @@ public class MedicalDocument
     public string FileName { get; set; } = string.Empty;
     public string FileType { get; set; } = string.Empty;
     public string FileUrl { get; set; } = string.Empty;
+    public long FileSizeBytes { get; set; }
     public DocumentType DocumentType { get; set; } = DocumentType.General;
     public string ExtractedText { get; set; } = string.Empty;
     public string AISummary { get; set; } = string.Empty;
+    public bool IsProcessed { get; set; } = false;
     public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
 }
 
@@ -162,9 +171,13 @@ public class Medication
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid PatientId { get; set; }
     public PatientProfile Patient { get; set; } = null!;
+    public Guid? PrescribedByDoctorId { get; set; }
+    public DoctorProfile? PrescribedByDoctor { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Dosage { get; set; } = string.Empty;
     public string Frequency { get; set; } = string.Empty;
+    public string Instructions { get; set; } = string.Empty;
+    public MedicationStatus Status { get; set; } = MedicationStatus.Active;
     public DateTime StartDate { get; set; }
     public DateTime? EndDate { get; set; }
     public string Notes { get; set; } = string.Empty;
@@ -203,9 +216,13 @@ public class FamilyMember
     public Guid OwnerPatientId { get; set; }
     public PatientProfile OwnerPatient { get; set; } = null!;
     public string Name { get; set; } = string.Empty;
-    public string Relationship { get; set; } = string.Empty;
+    public FamilyRelationship Relationship { get; set; } = FamilyRelationship.Other;
     public DateTime DateOfBirth { get; set; }
+    public string Gender { get; set; } = "NotSpecified";
+    public string BloodType { get; set; } = string.Empty;
+    public Guid? LinkedPatientProfileId { get; set; }
     public string Permissions { get; set; } = "ViewOnly";
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
 
 public class Notification
@@ -216,6 +233,8 @@ public class Notification
     public string Title { get; set; } = string.Empty;
     public string Message { get; set; } = string.Empty;
     public NotificationType Type { get; set; } = NotificationType.System;
+    public NotificationPriority Priority { get; set; } = NotificationPriority.Normal;
+    public string? ActionUrl { get; set; }
     public bool IsRead { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
@@ -276,6 +295,150 @@ public class AuditLog
     public string Action { get; set; } = string.Empty;
     public string EntityType { get; set; } = string.Empty;
     public string EntityId { get; set; } = string.Empty;
+    public string Details { get; set; } = string.Empty;
     public string IpAddress { get; set; } = "127.0.0.1";
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+// ===== NEW ENTITIES (Phase 2-4) =====
+
+public class Allergy
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid PatientId { get; set; }
+    public PatientProfile Patient { get; set; } = null!;
+    public string Name { get; set; } = string.Empty;
+    public AllergySeverity Severity { get; set; } = AllergySeverity.Mild;
+    public string Reaction { get; set; } = string.Empty;
+    public DateTime? DiagnosedDate { get; set; }
+    public string Source { get; set; } = "Patient"; // Patient, Doctor, System
+    public Guid? CreatedByUserId { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class ChronicCondition
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid PatientId { get; set; }
+    public PatientProfile Patient { get; set; } = null!;
+    public string Name { get; set; } = string.Empty;
+    public DateTime? DiagnosedDate { get; set; }
+    public ChronicConditionStatus Status { get; set; } = ChronicConditionStatus.Active;
+    public string Notes { get; set; } = string.Empty;
+    public string Source { get; set; } = "Patient";
+    public Guid? CreatedByUserId { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class Vaccination
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid PatientId { get; set; }
+    public PatientProfile Patient { get; set; } = null!;
+    public string Name { get; set; } = string.Empty;
+    public DateTime DateAdministered { get; set; }
+    public string Provider { get; set; } = string.Empty;
+    public int DoseNumber { get; set; } = 1;
+    public string Notes { get; set; } = string.Empty;
+    public string Source { get; set; } = "Patient";
+    public Guid? CreatedByUserId { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class DataConsent
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid PatientId { get; set; }
+    public PatientProfile Patient { get; set; } = null!;
+    public Guid GrantedToUserId { get; set; }
+    public User GrantedToUser { get; set; } = null!;
+    public ConsentScope Scope { get; set; } = ConsentScope.FullProfile;
+    public bool IsActive { get; set; } = true;
+    public DateTime GrantedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? RevokedAt { get; set; }
+    public DateTime? ExpiresAt { get; set; }
+}
+
+public class DataAccessLog
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid PatientId { get; set; }
+    public PatientProfile Patient { get; set; } = null!;
+    public Guid AccessedByUserId { get; set; }
+    public User AccessedByUser { get; set; } = null!;
+    public string AccessReason { get; set; } = string.Empty;
+    public string DataScope { get; set; } = string.Empty;
+    public string IpAddress { get; set; } = string.Empty;
+    public DateTime AccessedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class DoctorSchedule
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid DoctorId { get; set; }
+    public DoctorProfile Doctor { get; set; } = null!;
+    public DayOfWeekEnum DayOfWeek { get; set; }
+    public TimeSpan StartTime { get; set; }
+    public TimeSpan EndTime { get; set; }
+    public int SlotDurationMinutes { get; set; } = 30;
+    public bool IsActive { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class DoctorLeave
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid DoctorId { get; set; }
+    public DoctorProfile Doctor { get; set; } = null!;
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    public string Reason { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class AIHandoffSummary
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid AISessionId { get; set; }
+    public AISession AISession { get; set; } = null!;
+    public Guid PatientId { get; set; }
+    public PatientProfile Patient { get; set; } = null!;
+    public Guid? AppointmentId { get; set; }
+    public Appointment? Appointment { get; set; }
+    public string MainComplaint { get; set; } = string.Empty;
+    public string SymptomsSummary { get; set; } = string.Empty;
+    public string Duration { get; set; } = string.Empty;
+    public string Severity { get; set; } = string.Empty;
+    public string RelevantHistory { get; set; } = string.Empty;
+    public string CurrentMedications { get; set; } = string.Empty;
+    public string Allergies { get; set; } = string.Empty;
+    public string TriageCategory { get; set; } = string.Empty;
+    public string ConversationSummary { get; set; } = string.Empty;
+    public string QuestionsForDoctor { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class QrHealthToken
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid PatientId { get; set; }
+    public PatientProfile Patient { get; set; } = null!;
+    public string TokenHash { get; set; } = string.Empty;
+    public ConsentScope Scope { get; set; } = ConsentScope.FullProfile;
+    public DateTime ExpiresAt { get; set; }
+    public bool IsUsed { get; set; } = false;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class MedicalTermMapping
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string UzbekTerm { get; set; } = string.Empty;
+    public string RussianTerm { get; set; } = string.Empty;
+    public string EnglishTerm { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

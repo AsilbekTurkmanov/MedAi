@@ -16,7 +16,15 @@ import {
   AIChatResponse,
   SymptomAnalysisResponse,
   DoctorBriefResponse,
-  AdminStats
+  AdminStats,
+  Allergy,
+  ChronicCondition,
+  Vaccination,
+  DataConsent,
+  DataAccessLog,
+  DoctorAvailability,
+  AIHandoffSummary,
+  SearchResult
 } from '@/types';
 
 export const authService = {
@@ -79,6 +87,76 @@ export const patientService = {
   async getTimeline(): Promise<ApiResponse<TimelineItem[]>> {
     const res = await api.get<ApiResponse<TimelineItem[]>>('/patients/me/timeline');
     return res.data;
+  },
+
+  // Allergies
+  async getAllergies(): Promise<ApiResponse<Allergy[]>> {
+    const res = await api.get<ApiResponse<Allergy[]>>('/patients/me/allergies');
+    return res.data;
+  },
+
+  async addAllergy(data: { name: string; severity: string; reaction: string; diagnosedDate?: string }): Promise<ApiResponse<Allergy>> {
+    const res = await api.post<ApiResponse<Allergy>>('/patients/me/allergies', data);
+    return res.data;
+  },
+
+  async deleteAllergy(id: string): Promise<ApiResponse<boolean>> {
+    const res = await api.delete<ApiResponse<boolean>>(`/patients/me/allergies/${id}`);
+    return res.data;
+  },
+
+  // Chronic Conditions
+  async getChronicConditions(): Promise<ApiResponse<ChronicCondition[]>> {
+    const res = await api.get<ApiResponse<ChronicCondition[]>>('/patients/me/chronic-conditions');
+    return res.data;
+  },
+
+  async addChronicCondition(data: { name: string; status: string; notes?: string; diagnosedDate?: string }): Promise<ApiResponse<ChronicCondition>> {
+    const res = await api.post<ApiResponse<ChronicCondition>>('/patients/me/chronic-conditions', data);
+    return res.data;
+  },
+
+  async deleteChronicCondition(id: string): Promise<ApiResponse<boolean>> {
+    const res = await api.delete<ApiResponse<boolean>>(`/patients/me/chronic-conditions/${id}`);
+    return res.data;
+  },
+
+  // Vaccinations
+  async getVaccinations(): Promise<ApiResponse<Vaccination[]>> {
+    const res = await api.get<ApiResponse<Vaccination[]>>('/patients/me/vaccinations');
+    return res.data;
+  },
+
+  async addVaccination(data: { name: string; dateAdministered: string; provider: string; doseNumber?: number; notes?: string }): Promise<ApiResponse<Vaccination>> {
+    const res = await api.post<ApiResponse<Vaccination>>('/patients/me/vaccinations', data);
+    return res.data;
+  },
+
+  async deleteVaccination(id: string): Promise<ApiResponse<boolean>> {
+    const res = await api.delete<ApiResponse<boolean>>(`/patients/me/vaccinations/${id}`);
+    return res.data;
+  }
+};
+
+export const consentService = {
+  async getMyConsents(): Promise<ApiResponse<DataConsent[]>> {
+    const res = await api.get<ApiResponse<DataConsent[]>>('/consent/my-consents');
+    return res.data;
+  },
+
+  async grantConsent(data: { grantToUserId: string; scope: string; expiresAt?: string }): Promise<ApiResponse<DataConsent>> {
+    const res = await api.post<ApiResponse<DataConsent>>('/consent/grant', data);
+    return res.data;
+  },
+
+  async revokeConsent(consentId: string): Promise<ApiResponse<boolean>> {
+    const res = await api.post<ApiResponse<boolean>>(`/consent/revoke/${consentId}`);
+    return res.data;
+  },
+
+  async getAccessLogs(): Promise<ApiResponse<DataAccessLog[]>> {
+    const res = await api.get<ApiResponse<DataAccessLog[]>>('/consent/access-log');
+    return res.data;
   }
 };
 
@@ -98,8 +176,8 @@ export const doctorService = {
     return res.data;
   },
 
-  async getAppointments(): Promise<ApiResponse<Appointment[]>> {
-    const res = await api.get<ApiResponse<Appointment[]>>('/doctors/my-appointments');
+  async getAvailability(doctorId: string, date?: string): Promise<ApiResponse<DoctorAvailability>> {
+    const res = await api.get<ApiResponse<DoctorAvailability>>(`/doctors/${doctorId}/availability`, { params: { date } });
     return res.data;
   },
 
@@ -128,6 +206,11 @@ export const appointmentService = {
   async cancel(id: string): Promise<ApiResponse<Appointment>> {
     const res = await api.post<ApiResponse<Appointment>>(`/appointments/${id}/cancel`);
     return res.data;
+  },
+
+  async complete(id: string): Promise<ApiResponse<Appointment>> {
+    const res = await api.post<ApiResponse<Appointment>>(`/appointments/${id}/complete`);
+    return res.data;
   }
 };
 
@@ -144,9 +227,15 @@ export const medicationService = {
 };
 
 export const documentService = {
-  async upload(data: any): Promise<ApiResponse<MedicalDocument>> {
-    const res = await api.post<ApiResponse<MedicalDocument>>('/documents', data);
+  async upload(formData: FormData): Promise<ApiResponse<MedicalDocument>> {
+    const res = await api.post<ApiResponse<MedicalDocument>>('/documents/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
     return res.data;
+  },
+
+  getDownloadUrl(id: string): string {
+    return `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/documents/${id}/download`;
   }
 };
 
@@ -168,6 +257,20 @@ export const aiService = {
 
   async getDoctorBrief(patientId: string): Promise<ApiResponse<DoctorBriefResponse>> {
     const res = await api.get<ApiResponse<DoctorBriefResponse>>(`/ai/doctor-brief/${patientId}`);
+    return res.data;
+  },
+
+  async getHandoffSummary(sessionId: string, patientId: string): Promise<ApiResponse<AIHandoffSummary>> {
+    const res = await api.post<ApiResponse<AIHandoffSummary>>('/ai/handoff-summary', null, {
+      params: { sessionId, patientId }
+    });
+    return res.data;
+  }
+};
+
+export const searchService = {
+  async search(query: string): Promise<ApiResponse<SearchResult[]>> {
+    const res = await api.get<ApiResponse<SearchResult[]>>('/search', { params: { q: query } });
     return res.data;
   }
 };

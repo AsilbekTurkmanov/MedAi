@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using MedAI.Application.Common;
 using MedAI.Application.DTOs.AI;
+using MedAI.Application.DTOs.Clinical;
 using MedAI.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -43,32 +44,39 @@ public class AIController : ControllerBase
         return Ok(ApiResponse<SymptomAnalysisResponseDto>.Ok(result));
     }
 
-    [HttpPost("explain-lab-result/{labResultId}")]
+    [HttpPost("explain-lab-result/{labResultId:guid}")]
     public async Task<ActionResult<ApiResponse<LabExplanationResponseDto>>> ExplainLabResult(Guid labResultId)
     {
         var result = await _aiService.ExplainLabResultAsync(labResultId);
         return Ok(ApiResponse<LabExplanationResponseDto>.Ok(result));
     }
 
-    [HttpPost("analyze-document/{documentId}")]
+    [HttpPost("analyze-document/{documentId:guid}")]
     public async Task<ActionResult<ApiResponse<DocumentAnalysisResponseDto>>> AnalyzeDocument(Guid documentId)
     {
         var result = await _aiService.AnalyzeDocumentAsync(documentId);
         return Ok(ApiResponse<DocumentAnalysisResponseDto>.Ok(result));
     }
 
-    [HttpPost("medical-summary/{patientId}")]
+    [HttpPost("medical-summary/{patientId:guid}")]
     public async Task<ActionResult<ApiResponse<MedicalSummaryResponseDto>>> MedicalSummary(Guid patientId)
     {
         var result = await _aiService.GenerateMedicalSummaryAsync(patientId);
         return Ok(ApiResponse<MedicalSummaryResponseDto>.Ok(result));
     }
 
-    [HttpGet("doctor-brief/{patientId}")]
+    [HttpGet("doctor-brief/{patientId:guid}")]
     public async Task<ActionResult<ApiResponse<DoctorBriefResponseDto>>> GetDoctorBrief(Guid patientId)
     {
         var result = await _aiService.GenerateDoctorBriefAsync(patientId);
         return Ok(ApiResponse<DoctorBriefResponseDto>.Ok(result));
+    }
+
+    [HttpPost("handoff-summary")]
+    public async Task<ActionResult<ApiResponse<AIHandoffSummaryDto>>> GenerateHandoffSummary([FromQuery] Guid sessionId, [FromQuery] Guid patientId)
+    {
+        var result = await _aiService.GenerateHandoffSummaryAsync(sessionId, patientId);
+        return Ok(ApiResponse<AIHandoffSummaryDto>.Ok(result));
     }
 
     [HttpPost("explain-term")]

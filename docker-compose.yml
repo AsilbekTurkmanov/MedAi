@@ -6,9 +6,9 @@ services:
     container_name: medai-postgres
     restart: always
     environment:
-      POSTGRES_DB: medaidb
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_pass_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-medaidb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     ports:
       - "${POSTGRES_PORT:-5434}:5432"
     volumes:
@@ -27,6 +27,11 @@ services:
       - "${REDIS_PORT:-6380}:6379"
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   medai-api:
     build:
@@ -36,10 +41,15 @@ services:
     restart: always
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Host=postgres;Database=medaidb;Username=postgres;Password=${POSTGRES_PASSWORD:-postgres_secure_pass_2026}
-      - Jwt__Secret=${JWT_SECRET:-MedAI_Super_Secret_JWT_Key_2026_For_Healthcare_Platform_Security!}
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=${POSTGRES_DB:-medaidb};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      - Jwt__Secret=${JWT_SECRET:?JWT_SECRET is required}
+      - AI_PROVIDER=${AI_PROVIDER:-OpenAI}
+      - AI_API_KEY=${AI_API_KEY:-}
+      - AI_MODEL=${AI_MODEL:-gpt-4o}
     ports:
       - "${BACKEND_PORT:-5050}:5000"
+    volumes:
+      - uploads_data:/app/wwwroot/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -49,7 +59,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://169.58.161.223:5050/api}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5050/api}
     container_name: medai-frontend
     restart: always
     environment:
@@ -62,3 +72,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  uploads_data:

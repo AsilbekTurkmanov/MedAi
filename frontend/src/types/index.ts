@@ -48,6 +48,39 @@ export interface PatientProfile {
   createdAt: string;
 }
 
+export interface Allergy {
+  id: string;
+  patientId: string;
+  name: string;
+  severity: 'Mild' | 'Moderate' | 'Severe' | 'LifeThreatening';
+  reaction: string;
+  diagnosedDate?: string;
+  source: string;
+  createdAt: string;
+}
+
+export interface ChronicCondition {
+  id: string;
+  patientId: string;
+  name: string;
+  diagnosedDate?: string;
+  status: 'Active' | 'InRemission' | 'Resolved' | 'Monitoring';
+  notes: string;
+  source: string;
+  createdAt: string;
+}
+
+export interface Vaccination {
+  id: string;
+  patientId: string;
+  name: string;
+  dateAdministered: string;
+  provider: string;
+  doseNumber: number;
+  notes: string;
+  createdAt: string;
+}
+
 export interface HealthPassport {
   patientId: string;
   fullName: string;
@@ -60,6 +93,9 @@ export interface HealthPassport {
   activeMedications: { name: string; dosage: string; frequency: string }[];
   recentLabResults: { testName: string; value: string; unit: string; status: string; testDate: string }[];
   activeConditions: { id: string; type: string; title: string; description: string; eventDate: string }[];
+  allergies?: Allergy[];
+  chronicConditions?: ChronicCondition[];
+  vaccinations?: Vaccination[];
 }
 
 export interface TimelineItem {
@@ -69,6 +105,7 @@ export interface TimelineItem {
   description: string;
   date: string;
   badgeColor: string;
+  detailsUrl?: string;
 }
 
 export interface DoctorProfile {
@@ -123,9 +160,11 @@ export interface MedicalDocument {
   fileName: string;
   fileType: string;
   fileUrl: string;
+  fileSizeBytes?: number;
   documentType: string;
   extractedText: string;
   aiSummary: string;
+  isProcessed?: boolean;
   uploadedAt: string;
 }
 
@@ -147,13 +186,53 @@ export interface LabResult {
 export interface Medication {
   id: string;
   patientId: string;
+  prescribedByDoctorId?: string;
+  prescribedByDoctorName?: string;
   name: string;
   dosage: string;
   frequency: string;
+  instructions?: string;
+  status?: 'Active' | 'Completed' | 'Discontinued' | 'OnHold';
   startDate: string;
   endDate?: string;
   notes: string;
   createdAt: string;
+}
+
+export interface DataConsent {
+  id: string;
+  patientId: string;
+  grantedToUserId: string;
+  grantedToUserName: string;
+  grantedToUserRole: string;
+  scope: string;
+  isActive: boolean;
+  grantedAt: string;
+  expiresAt?: string;
+}
+
+export interface DataAccessLog {
+  id: string;
+  patientId: string;
+  accessedByUserId: string;
+  accessedByUserName: string;
+  accessReason: string;
+  dataScope: string;
+  ipAddress: string;
+  accessedAt: string;
+}
+
+export interface AvailableSlot {
+  date: string;
+  startTime: string;
+  endTime: string;
+  isAvailable: boolean;
+}
+
+export interface DoctorAvailability {
+  doctorId: string;
+  doctorName: string;
+  availableSlots: AvailableSlot[];
 }
 
 export interface AIChatResponse {
@@ -184,6 +263,31 @@ export interface DoctorBriefResponse {
   criticalLabAlerts: string[];
   recentAppointments: string[];
   recommendedClinicalFocus: string[];
+}
+
+export interface AIHandoffSummary {
+  id: string;
+  sessionId: string;
+  patientId: string;
+  patientName: string;
+  mainComplaint: string;
+  symptomsSummary: string;
+  duration: string;
+  severity: string;
+  relevantHistory: string;
+  currentMedications: string;
+  allergies: string;
+  triageCategory: string;
+  conversationSummary: string;
+  questionsForDoctor: string;
+  createdAt: string;
+}
+
+export interface SearchResult {
+  type: 'Doctor' | 'Clinic' | 'Article';
+  id: string;
+  title: string;
+  description: string;
 }
 
 export interface AdminStats {
